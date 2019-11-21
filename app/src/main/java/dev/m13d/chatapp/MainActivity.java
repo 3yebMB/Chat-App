@@ -75,7 +75,9 @@ public class MainActivity extends AppCompatActivity {
 //        adapter = new FirebaseListAdapter<Message>(this, Message.class, R.layout.list_item, FirebaseDatabase.getInstance().getReference()) {
 //            @Override
 //            protected void populateView(View v, Message model, int position) {
-//                TextView text_user, text_time, text_text;
+//                TextView text_user, text_time;
+//                BubbleTextView text_text;
+
 //                text_user = v.findViewById(R.id.message_user);
 //                text_time = v.findViewById(R.id.message_time);
 //                text_text = v.findViewById(R.id.message_text);
