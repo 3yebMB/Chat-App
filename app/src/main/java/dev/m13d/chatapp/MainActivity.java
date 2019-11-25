@@ -1,5 +1,6 @@
 package dev.m13d.chatapp;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.text.format.DateFormat;
 import android.view.View;
@@ -9,21 +10,18 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
-
 import com.firebase.ui.auth.AuthUI;
 import com.firebase.ui.database.FirebaseListAdapter;
 import com.firebase.ui.database.FirebaseListOptions;
-import com.github.library.bubbleview.BubbleTextView;
 import com.google.android.material.snackbar.Snackbar;
-import com.google.firebase.FirebaseOptions;
+import com.google.firebase.auth.ActionCodeSettings;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
-
 import java.util.Collections;
 import java.util.Objects;
-
 import hani.momanii.supernova_emoji_library.Actions.EmojIconActions;
 import hani.momanii.supernova_emoji_library.Helper.EmojiconEditText;
 
@@ -32,9 +30,25 @@ public class MainActivity extends AppCompatActivity {
     private static int SIGN_IN_CODE = 1;
     private RelativeLayout activity_main;
     private FirebaseListAdapter<Message> adapter;
+    private FirebaseListOptions<Message> options;
     private EmojiconEditText emojiconEditText;
     private ImageView emojiButton, sendButton;
     private EmojIconActions emojIconActions;
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        if (requestCode == SIGN_IN_CODE) {
+            if (resultCode == RESULT_OK) {
+                Snackbar.make(activity_main, "You're authorized", Snackbar.LENGTH_LONG).show();
+                displayAllMessages();
+            } else {
+                Snackbar.make(activity_main, "You're not authorized", Snackbar.LENGTH_LONG).show();
+                finish();
+            }
+        }
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,27 +57,34 @@ public class MainActivity extends AppCompatActivity {
 
         initViews();
 
-//        sendButton.setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View v) {
-//                String mail = Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getEmail();
-//                FirebaseDatabase.getInstance().getReference().push(
-//                        new Message(mail, emojiconEditText.getText().toString())
-//                );
-//                emojiconEditText.setText("");
-//            }
-//        });
+        sendButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (emojiconEditText.getText().toString().equals("")) return;
+                FirebaseDatabase.getInstance().getReference().push().setValue(
+                        new Message(Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getEmail(),
+                                emojiconEditText.getText().toString()
+                        )
+                );
+
+                emojiconEditText.setText("");
+            }
+        });
+
+        ActionCodeSettings actionCodeSettings = ActionCodeSettings.newBuilder()
+                .setAndroidPackageName("dev.m13d.chatapp", true, "19")
+                .setHandleCodeInApp(true)
+                .setUrl("https://google.com") // This URL needs to be whitelisted
+                .build();
 
         if (FirebaseAuth.getInstance().getCurrentUser() == null) {
             startActivityForResult(
                     AuthUI.getInstance()
                             .createSignInIntentBuilder()
                             .setAvailableProviders(Collections.singletonList(
-//                                    new AuthUI.IdpConfig.GoogleBuilder().build(),
-//                                    new AuthUI.IdpConfig.FacebookBuilder().build(),
-                                    new AuthUI.IdpConfig.EmailBuilder().build())).build(),
-//                                    new AuthUI.IdpConfig.PhoneBuilder().build(),
-//                                    new AuthUI.IdpConfig.AnonymousBuilder().build())).build(),
+                                    new AuthUI.IdpConfig.EmailBuilder().enableEmailLinkSignIn()
+                                            .setActionCodeSettings(actionCodeSettings).build()))
+                                            .build(),
                                     SIGN_IN_CODE);
         } else {
             Snackbar.make(activity_main, "You're authorized", Snackbar.LENGTH_LONG).show();
@@ -82,52 +103,26 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void displayAllMessages() {
+        Query query = FirebaseDatabase.getInstance().getReference().getRef();
         ListView listOfMessages = findViewById(R.id.list_of_messages);
 
-        Query query = FirebaseDatabase.getInstance().getReference().child("chats");
-//The error said the constructor expected FirebaseListOptions - here you create them:
-        FirebaseListOptions<Message> options = new FirebaseListOptions.Builder<Message>()
+        options = new FirebaseListOptions.Builder<Message>()
                 .setQuery(query, Message.class)
                 .setLayout(R.layout.list_item)
                 .build();
-        //Finally you pass them to the constructor here:
+
         adapter = new FirebaseListAdapter<Message>(options){
             @Override
-            protected void populateView(View v, Message model, int position) {
-                // Get references to the views of message.xml
+            protected void populateView(@NonNull View v, @NonNull Message model, int position) {
+                TextView messageUser = (TextView)v.findViewById(R.id.message_user);
                 TextView messageText = (TextView)v.findViewById(R.id.message_text);
                 TextView messageTime = (TextView)v.findViewById(R.id.message_time);
 
-                // Set their text
+                messageUser.setText(model.getUserName());
                 messageText.setText(model.getTextMessage());
-                // Format the date before showing it
                 messageTime.setText(DateFormat.format("dd-MM-yyyy (HH:mm:ss)", model.getMessageTime()));
             }
         };
-
-
-//        adapter = new FirebaseListAdapter<Message>() {
-//            @Override
-//            protected void populateView(@NonNull View v, @NonNull Message model, int position) {
-//
-//            }
-//        };
-
-//        adapter = new FirebaseListAdapter<Message>(this, Message.class, R.layout.list_item, FirebaseDatabase.getInstance().getReference()) {
-//            @Override
-//            protected void populateView(View v, Message model, int position) {
-//                TextView text_user, text_time;
-//                BubbleTextView text_text;
-//
-//                text_user = v.findViewById(R.id.message_user);
-//                text_time = v.findViewById(R.id.message_time);
-//                text_text = v.findViewById(R.id.message_text);
-//
-//                text_user.setText(model.getUserName());
-//                text_text.setText(model.getTextMessage());
-//                text_time.setText(DateFormat.format("dd-mm-yyyy HH:MM:SS", model.getMessageTime()));
-//            }
-//        };
 
         listOfMessages.setAdapter(adapter);
     }
