@@ -28,9 +28,9 @@
         android:layout_alignParentTop="true"
         android:layout_alignParentStart="true"
         android:textStyle="normal|bold"
-        android:layout_marginTop="6dp"
+        android:layout_marginTop="20dp"
         android:layout_below="@id/message_user"
-        android:textSize="18sp"
+        android:textSize="16sp"
         android:textAppearance="@style/TextAppearance.AppCompat.Body1"
         android:textColor="#FFF"
         android:padding="8dp"
@@ -40,8 +40,6 @@
         app:arrowPosition="16dp"
         app:arrowLocation="left"
         app:arrowCenter="false"
-        app:bubbleColor="#5f6a7d"
-        />
-
+        app:bubbleColor="#5f6a7d"/>
 
 </RelativeLayout>

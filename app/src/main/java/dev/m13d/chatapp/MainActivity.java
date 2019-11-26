@@ -8,7 +8,6 @@ import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
@@ -20,6 +19,7 @@ import com.google.firebase.auth.ActionCodeSettings;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.FirebaseDatabase;
 import com.google.firebase.database.Query;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Objects;
 import hani.momanii.supernova_emoji_library.Actions.EmojIconActions;
@@ -34,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
     private EmojiconEditText emojiconEditText;
     private ImageView emojiButton, sendButton;
     private EmojIconActions emojIconActions;
+    private ArrayList<Message> messages = new ArrayList<>();
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
@@ -42,7 +43,7 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == SIGN_IN_CODE) {
             if (resultCode == RESULT_OK) {
                 Snackbar.make(activity_main, "You're authorized", Snackbar.LENGTH_LONG).show();
-                displayAllMessages();
+                displayChatMessage();
             } else {
                 Snackbar.make(activity_main, "You're not authorized", Snackbar.LENGTH_LONG).show();
                 finish();
@@ -61,7 +62,8 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if (emojiconEditText.getText().toString().equals("")) return;
-                FirebaseDatabase.getInstance().getReference().push().setValue(
+
+                FirebaseDatabase.getInstance().getReference().child("chats").push().setValue(
                         new Message(Objects.requireNonNull(FirebaseAuth.getInstance().getCurrentUser()).getEmail(),
                                 emojiconEditText.getText().toString()
                         )
@@ -88,7 +90,7 @@ public class MainActivity extends AppCompatActivity {
                                     SIGN_IN_CODE);
         } else {
             Snackbar.make(activity_main, "You're authorized", Snackbar.LENGTH_LONG).show();
-            displayAllMessages();
+            displayChatMessage();
         }
     }
 
@@ -102,28 +104,31 @@ public class MainActivity extends AppCompatActivity {
         emojIconActions.ShowEmojIcon();
     }
 
-    private void displayAllMessages() {
-        Query query = FirebaseDatabase.getInstance().getReference().getRef();
-        ListView listOfMessages = findViewById(R.id.list_of_messages);
+    private void displayChatMessage() {
 
-        options = new FirebaseListOptions.Builder<Message>()
+        ListView listOfMessage = (ListView)findViewById(R.id.list_of_messages);
+        Query query = FirebaseDatabase.getInstance().getReference().child("chats").limitToLast(50);
+        FirebaseListOptions<Message> options = new FirebaseListOptions.Builder<Message>()
                 .setQuery(query, Message.class)
                 .setLayout(R.layout.list_item)
+                .setLifecycleOwner(this)
                 .build();
 
-        adapter = new FirebaseListAdapter<Message>(options){
+        adapter = new FirebaseListAdapter<Message>(options) {
+
             @Override
             protected void populateView(@NonNull View v, @NonNull Message model, int position) {
-                TextView messageUser = (TextView)v.findViewById(R.id.message_user);
-                TextView messageText = (TextView)v.findViewById(R.id.message_text);
-                TextView messageTime = (TextView)v.findViewById(R.id.message_time);
+                TextView messageText, messageUser, messageTime;
+                messageText = (TextView) v.findViewById(R.id.message_text);
+                messageUser = (TextView) v.findViewById(R.id.message_user);
+                messageTime = (TextView) v.findViewById(R.id.message_time);
 
-                messageUser.setText(model.getUserName());
                 messageText.setText(model.getTextMessage());
+                messageUser.setText(model.getUserName());
                 messageTime.setText(DateFormat.format("dd-MM-yyyy (HH:mm:ss)", model.getMessageTime()));
             }
         };
 
-        listOfMessages.setAdapter(adapter);
+        listOfMessage.setAdapter(adapter);
     }
 }
