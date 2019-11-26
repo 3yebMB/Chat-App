@@ -15,6 +15,7 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import com.firebase.ui.auth.AuthUI;
@@ -48,7 +49,7 @@ public class MainActivity extends AppCompatActivity {
     private ImageView emojiButton, sendButton;
     private EmojIconActions emojIconActions;
     private ArrayList<Message> messages = new ArrayList<>();
-    private RecyclerView listOfMessage;
+    private RecyclerView recycler_of_messages;
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
@@ -57,7 +58,6 @@ public class MainActivity extends AppCompatActivity {
         if (requestCode == SIGN_IN_CODE) {
             if (resultCode == RESULT_OK) {
                 Snackbar.make(activity_main, "You're authorized", Snackbar.LENGTH_LONG).show();
-//                displayChatMessage();
             } else {
                 Snackbar.make(activity_main, "You're not authorized", Snackbar.LENGTH_LONG).show();
                 finish();
@@ -73,7 +73,8 @@ public class MainActivity extends AppCompatActivity {
         initViews();
 
         final DataAdapter dataAdapter = new DataAdapter(this, messages);
-        listOfMessage.setAdapter(dataAdapter);
+        recycler_of_messages.setLayoutManager(new LinearLayoutManager(this));
+        recycler_of_messages.setAdapter(dataAdapter);
 
         sendButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -107,7 +108,6 @@ public class MainActivity extends AppCompatActivity {
                                     SIGN_IN_CODE);
         } else {
             Snackbar.make(activity_main, "You're authorized", Snackbar.LENGTH_LONG).show();
-//            displayChatMessage();
         }
 
         FirebaseDatabase.getInstance().getReference("chats").addChildEventListener(new ChildEventListener() {
@@ -117,7 +117,7 @@ public class MainActivity extends AppCompatActivity {
                 Message msg = dataSnapshot.getValue(Message.class);
                 messages.add(msg);
                 dataAdapter.notifyDataSetChanged();
-                listOfMessage.smoothScrollToPosition(messages.size());
+                recycler_of_messages.smoothScrollToPosition(messages.size());
             }
 
             @Override
@@ -147,37 +147,9 @@ public class MainActivity extends AppCompatActivity {
         sendButton = findViewById(R.id.send_button);
         emojiButton = findViewById(R.id.emoji_button);
         emojiconEditText = findViewById(R.id.textField);
-        listOfMessage = findViewById(R.id.list_of_messages);
+        recycler_of_messages = findViewById(R.id.recycler_of_messages);
 
         emojIconActions = new EmojIconActions(getApplicationContext(), activity_main, emojiconEditText, emojiButton);
         emojIconActions.ShowEmojIcon();
     }
-
-//    private void displayChatMessage() {
-//
-//        ListView listOfMessage = (ListView)findViewById(R.id.list_of_messages);
-//        Query query = FirebaseDatabase.getInstance().getReference().child("chats").limitToLast(50);
-//        FirebaseListOptions<Message> options = new FirebaseListOptions.Builder<Message>()
-//                .setQuery(query, Message.class)
-//                .setLayout(R.layout.list_item)
-//                .setLifecycleOwner(this)
-//                .build();
-//
-//        adapter = new FirebaseListAdapter<Message>(options) {
-//
-//            @Override
-//            protected void populateView(@NonNull View v, @NonNull Message model, int position) {
-//                TextView messageText, messageUser, messageTime;
-//                messageText = (TextView) v.findViewById(R.id.message_text);
-//                messageUser = (TextView) v.findViewById(R.id.message_user);
-//                messageTime = (TextView) v.findViewById(R.id.message_time);
-//
-//                messageText.setText(model.getTextMessage());
-//                messageUser.setText(model.getUserName());
-//                messageTime.setText(DateFormat.format("dd-MM-yyyy (HH:mm:ss)", model.getMessageTime()));
-//            }
-//        };
-//
-//        listOfMessage.setAdapter(adapter);
-//    }
 }
