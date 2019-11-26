@@ -35,8 +35,9 @@
         android:layout_toEndOf="@+id/emoji_button"
         app:emojiconSize="30sp"/>
 
-    <ListView
-        android:id="@+id/list_of_messages"
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recycler_of_messages"
         android:layout_above="@+id/textField"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
@@ -49,8 +50,6 @@
         android:layout_marginStart="8dp"
         android:layout_marginEnd="8dp"
         android:stackFromBottom="true"
-        android:transcriptMode="alwaysScroll">
+        android:transcriptMode="alwaysScroll"/>
 
-    </ListView>
-
-</RelativeLayout>
+    </RelativeLayout>
